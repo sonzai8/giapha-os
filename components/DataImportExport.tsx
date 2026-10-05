@@ -22,6 +22,7 @@ export default function DataImportExport() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [importMode, setImportMode] = useState<'replace_all' | 'merge'>('replace_all')
 
   const [persons, setPersons] = useState<Person[]>([])
   const [exportRootId, setExportRootId] = useState<string | null>(null)
@@ -182,7 +183,7 @@ export default function DataImportExport() {
         relationships: payload.relationships,
         person_details_private: payload.person_details_private,
         custom_events: payload.custom_events
-      })
+      }, importMode)
 
       if ('error' in result) {
         setImportStatus({
@@ -308,11 +309,37 @@ export default function DataImportExport() {
               </h3>
               <p className='mt-1 text-sm text-stone-500'>
                 {t('restoreDataDescription')}
-                <span className='ml-1 font-medium text-rose-600'>
-                  {t('restoreWarning')}
-                </span>
               </p>
             </div>
+          </div>
+
+          <div className='mb-4 space-y-2'>
+            <label className='block text-sm font-medium text-stone-700'>{t('importMode')}</label>
+            <div className='flex flex-col gap-2'>
+              <label className='flex items-center gap-2 text-sm text-stone-600'>
+                <input
+                  type='radio'
+                  name='importMode'
+                  checked={importMode === 'replace_all'}
+                  onChange={() => setImportMode('replace_all')}
+                  className='text-rose-600 focus:ring-rose-500'
+                />
+                {t('importModeReplace')}
+              </label>
+              <label className='flex items-center gap-2 text-sm text-stone-600'>
+                <input
+                  type='radio'
+                  name='importMode'
+                  checked={importMode === 'merge'}
+                  onChange={() => setImportMode('merge')}
+                  className='text-rose-600 focus:ring-rose-500'
+                />
+                {t('importModeMerge')}
+              </label>
+            </div>
+            <p className='mt-2 text-sm font-medium text-rose-600'>
+              {importMode === 'replace_all' ? t('restoreWarning') : t('restoreWarningMerge')}
+            </p>
           </div>
 
           <input
@@ -356,9 +383,9 @@ export default function DataImportExport() {
                     {t('restoreConfirmTitle')}
                   </h3>
                   <p className='mt-2 text-sm leading-relaxed text-stone-600'>
-                    {t('restoreConfirmText', {
-                      file: selectedFile?.name || ''
-                    })}
+                    {importMode === 'replace_all' 
+                      ? t('restoreConfirmText', { file: selectedFile?.name || '' })
+                      : t('restoreConfirmTextMerge', { file: selectedFile?.name || '' })}
                   </p>
                   <p className='mt-2 text-sm font-medium text-rose-600'>
                     {t('restoreIrreversible')}

@@ -392,7 +392,8 @@ export async function importData(
         relationships: Relationship[]
         person_details_private?: PersonDetailsPrivateExport[]
         custom_events?: CustomEventExport[]
-      }
+      },
+  mode: 'replace_all' | 'merge' = 'replace_all'
 ) {
   const { t } = await getServerTranslations()
   const isAdmin = await getIsAdmin()
@@ -405,51 +406,70 @@ export async function importData(
   const validationError = validateImportPayload(importPayload, t)
   if (validationError) return { error: validationError }
 
-  // 1. Xoá custom_events
-  const { error: delEventsError } = await supabase
-    .from('custom_events')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
+  if (mode === 'replace_all') {
+    // 1. Xoá custom_events
+    const { error: delEventsError } = await supabase
+      .from('custom_events')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000')
 
-  if (delEventsError)
-    return {
-      error: t('deleteEventsError', { error: delEventsError.message })
+    if (delEventsError)
+      return {
+        error: t('deleteEventsError', { error: delEventsError.message })
+      }
+
+    // 2. Xoá relationships (FK constraint)
+    const { error: delRelError } = await supabase
+      .from('relationships')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000')
+
+    if (delRelError)
+      return {
+        error: t('deleteRelationshipsError', { error: delRelError.message })
+      }
+
+    // 3. Xoá person_details_private (FK constraint on persons)
+    const { error: delPrivateError } = await supabase
+      .from('person_details_private')
+      .delete()
+      .neq('person_id', '00000000-0000-0000-0000-000000000000')
+
+    if (delPrivateError)
+      return {
+        error: t('deletePrivateDetailsError', {
+          error: delPrivateError.message
+        })
+      }
+
+    // 4. Xoá persons
+    const { error: delPersonsError } = await supabase
+      .from('persons')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000')
+
+    if (delPersonsError)
+      return {
+        error: t('deletePersonsError', { error: delPersonsError.message })
+      }
+  } else {
+    // Chế độ Merge: Chỉ xoá các relationships giữa các person nằm trong payload
+    const importedPersonIds = Array.from(
+      new Set(importPayload.persons.map((p) => p.id))
+    )
+    if (importedPersonIds.length > 0) {
+      const { error: delRelError } = await supabase
+        .from('relationships')
+        .delete()
+        .in('person_a', importedPersonIds)
+        .in('person_b', importedPersonIds)
+
+      if (delRelError)
+        return {
+          error: t('deleteRelationshipsError', { error: delRelError.message })
+        }
     }
-
-  // 2. Xoá relationships (FK constraint)
-  const { error: delRelError } = await supabase
-    .from('relationships')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
-
-  if (delRelError)
-    return {
-      error: t('deleteRelationshipsError', { error: delRelError.message })
-    }
-
-  // 3. Xoá person_details_private (FK constraint on persons)
-  const { error: delPrivateError } = await supabase
-    .from('person_details_private')
-    .delete()
-    .neq('person_id', '00000000-0000-0000-0000-000000000000')
-
-  if (delPrivateError)
-    return {
-      error: t('deletePrivateDetailsError', {
-        error: delPrivateError.message
-      })
-    }
-
-  // 4. Xoá persons
-  const { error: delPersonsError } = await supabase
-    .from('persons')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000')
-
-  if (delPersonsError)
-    return {
-      error: t('deletePersonsError', { error: delPersonsError.message })
-    }
+  }
 
   // 5. Insert persons (sanitized — chỉ giữ các field schema hiện tại)
   const CHUNK = 200
@@ -457,7 +477,7 @@ export async function importData(
 
   for (let i = 0; i < persons.length; i += CHUNK) {
     const chunk = persons.slice(i, i + CHUNK)
-    const { error } = await supabase.from('persons').insert(chunk)
+    const { error } = await supabase.from('persons').upsert(chunk)
     if (error)
       return {
         error: t('importPersonsError', {
@@ -493,7 +513,7 @@ export async function importData(
       const chunk = privateDetails.slice(i, i + CHUNK)
       const { error } = await supabase
         .from('person_details_private')
-        .insert(chunk)
+        .upsert(chunk)
       if (error)
         return {
           error: t('importPrivateDetailsError', {
@@ -513,7 +533,7 @@ export async function importData(
   if (customEvents.length > 0) {
     for (let i = 0; i < customEvents.length; i += CHUNK) {
       const chunk = customEvents.slice(i, i + CHUNK)
-      const { error } = await supabase.from('custom_events').insert(chunk)
+      const { error } = await supabase.from('custom_events').upsert(chunk)
       if (error)
         return {
           error: t('importEventsError', {

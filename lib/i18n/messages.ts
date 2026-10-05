@@ -555,11 +555,18 @@ export const messages = {
     restoreData: 'Phục hồi dữ liệu',
     restoreDataDescription:
       'Khôi phục cây gia phả từ file đã sao lưu (.json, .ged, hoặc .zip).',
+    importMode: 'Phương thức phục hồi',
+    importModeReplace: 'Phục hồi toàn bộ (Xoá dữ liệu cũ)',
+    importModeMerge: 'Cập nhật / Thêm mới (Giữ nhánh khác)',
     restoreWarning: 'Cảnh báo: Tác vụ này sẽ xoá toàn bộ dữ liệu hiện tại!',
+    restoreWarningMerge:
+      'Hệ thống sẽ cập nhật các thành viên có trong file và thêm mới nếu có. Dữ liệu các nhánh khác không bị ảnh hưởng.',
     chooseRestoreFile: 'Chọn file phục hồi',
     restoreConfirmTitle: 'Xác nhận phục hồi',
     restoreConfirmText:
       'Hệ thống sẽ xoá toàn bộ dữ liệu thành viên, mối quan hệ, thông tin riêng tư và sự kiện hiện tại để thay thế bằng dữ liệu từ file {file}.',
+    restoreConfirmTextMerge:
+      'Hệ thống sẽ cập nhật dữ liệu thành viên, quan hệ từ file {file}. Các nhánh không có trong file sẽ được giữ nguyên.',
     restoreIrreversible: 'Hành động này không thể hoàn tác. Bạn đã chắc chắn?',
     restoreCancel: 'Huỷ bỏ',
     restoreContinue: 'Vẫn tiếp tục',
@@ -1343,11 +1350,18 @@ export const messages = {
     restoreData: 'Restore data',
     restoreDataDescription:
       'Restore the family tree from a backup file (.json, .ged, or .zip).',
+    importMode: 'Restore method',
+    importModeReplace: 'Replace all (Delete old data)',
+    importModeMerge: 'Update / Add new (Keep other branches)',
     restoreWarning: 'Warning: This will delete all current data!',
+    restoreWarningMerge:
+      'The system will update members in the file and add new ones. Data in other branches will not be affected.',
     chooseRestoreFile: 'Choose restore file',
     restoreConfirmTitle: 'Confirm restore',
     restoreConfirmText:
       'The system will delete all current members, relationships, private information, and events and replace them with data from {file}.',
+    restoreConfirmTextMerge:
+      'The system will update data from {file}. Data not in the file will remain unchanged.',
     restoreIrreversible: 'This action cannot be undone. Are you sure?',
     restoreCancel: 'Cancel',
     restoreContinue: 'Continue',
